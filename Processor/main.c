@@ -1,0 +1,30 @@
+//#include "Assembler.h"
+//#include "../EvgeniyOnegin/Output.h"
+//#include "Common.h"
+//#include "StrFunctions.h"
+//#include <stdio.h>
+
+#include "Assembler.h"
+#include "Processor.h"
+
+int main(void)
+{
+
+    Assemble("Program.asm", "Program.bin");
+
+    DisAssemble("Program.bin");
+
+    processor p = {};
+
+    ProcessorInit(&p, "Program.bin");
+
+    processor_err_struct_t Err = {};
+
+    LaunchProgram(&p, &Err);
+
+    ProcessorDestroy(&p);
+
+    return 0;
+
+    
+}
