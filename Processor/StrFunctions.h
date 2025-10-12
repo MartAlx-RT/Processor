@@ -22,3 +22,7 @@ bool CheckEndLine(char *Line);
 
 char *RecognizeRegAndMove(char *CompReg, regs *Reg);
 
+char *SkipSpaces(char *Cursor);
+
+unsigned int CountInstrInLine(char *Cursor);
+

@@ -7,7 +7,10 @@ extern const char *COMMANDS[];
 extern const size_t COMMANDS_SIZE;
 
 extern const char *REGS_NAME[];
-extern const size_t NUM_OF_REGS;
+static const size_t NUM_OF_REGS = 16;
+
+extern const int LABLES_SIZE;
+extern int Lables[1000];
 
 typedef enum
 {
@@ -21,6 +24,13 @@ typedef enum
     SQRT,
     PUSHR,
     POPR,
+    JMP,
+    JB,
+    JBE,
+    JA,
+    JAE,
+    JE,
+    JNE,
 
     _SKIP_LINE,
     _UNDEF

@@ -16,7 +16,7 @@ typedef struct
 
     size_t InstrPtr;
 
-    long long int Regs[_NUM_OF_REGS];
+    long long int Regs[NUM_OF_REGS];
     
     stack_t Stk;
     
@@ -70,6 +70,7 @@ typedef struct
 
 } processor_err_struct_t;
 
+
 bool ProcessorVerifyExt(processor *Proc, processor_err_struct_t *ProcErr);
 
 bool ProcessorInitExt(processor *Proc, const char *BinFilePath, processor_err_struct_t *ProcErr);
@@ -78,11 +79,11 @@ bool ProcessorVerify(processor *Proc);
 
 bool ProcessorInit(processor *Proc, const char *BinFilePath);
 
-bool _ProcessorDump(processor *Proc, const char *File, const int Line);
+bool _ProcessorDump(processor *Proc, processor_err_struct_t *Err, const char *File, const unsigned int Line);
 
 
-#define ProcessorDump(PtrToProc)\
- _ProcessorDump(PtrToProc,__FILE__,__LINE__)
+#define ProcessorDump(PtrToProc, PtrToErrStrct)\
+ _ProcessorDump(PtrToProc,PtrToErrStrct,__FILE__,__LINE__)
 
 void ProcessorDestroy(processor *Proc);
 

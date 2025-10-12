@@ -2,19 +2,20 @@
 
 static const char *ReverseRecognize(instruction Instr)
 {
-    if(Instr>=COMMANDS_SIZE/sizeof(char*))
-        return COMMANDS[_UNDEF];
+    if(Instr>=COMMANDS_SIZE)
+        return COMMANDS[_UNDEF];//wrong!
 
     return COMMANDS[Instr];
 }
 
 static const char *ReverseRegRecognize(regs Reg)
 {
-    if(Reg >= NUM_OF_REGS)
+    if((size_t)Reg >= NUM_OF_REGS)
         return REGS_NAME[UNDEF_REG];
 
     return REGS_NAME[Reg];
 }
+
 
 void DisAssemble(const char *ByteCodePath)
 {
@@ -41,11 +42,15 @@ void DisAssemble(const char *ByteCodePath)
 
     instruction Instr = _UNDEF;
 
-    char c = 0;
+    //char c = 0;
 
-    while(fscanf(ByteCode,"%d", &Instr) > 0)
+    int I_Instr = 0;
+    unsigned int InstrCounter = 0;
+    while (fscanf(ByteCode, "%d", &I_Instr) > 0)
     {
-        if(Instr>=_UNDEF)
+        Instr = (instruction)I_Instr;
+
+        if (Instr >= _UNDEF)
         {
             _print_wrg("undefined instruction\n");
 
@@ -54,9 +59,10 @@ void DisAssemble(const char *ByteCodePath)
             continue;
         }
 
-        printf(colorize("%s", _MAGENTA_), ReverseRecognize(Instr));
+        printf(colorize("%3u |", _CYAN_) colorize("%s", _MAGENTA_), InstrCounter++, ReverseRecognize(Instr));
 
-        switch(Instr)
+        int I_Reg = 0;
+        switch (Instr)
         {
         case PUSH:
 
@@ -64,22 +70,49 @@ void DisAssemble(const char *ByteCodePath)
 
             printf(colorize(" %lld", _GREEN_), Arg);
 
+            InstrCounter++;
+
             break;
 
         case PUSHR:
+        case POPR:
 
-            fscanf(ByteCode, "%d", &Reg);
+            fscanf(ByteCode, "%d", &I_Reg);
+
+            Reg = (regs)I_Reg;
 
             printf(colorize(" %s", _GREEN_), ReverseRegRecognize(Reg));
+
+            InstrCounter++;
 
             break;
         
-        case POPR:
+        case JB:
+        case JBE:
+        case JA:
+        case JAE:
+        case JE:
+        case JNE:
+        case JMP:
 
-            fscanf(ByteCode, "%d", &Reg);
+            fscanf(ByteCode, "%lld", &Arg);
 
-            printf(colorize(" %s", _GREEN_), ReverseRegRecognize(Reg));
+            printf(colorize(" :%lld", _YELLOW_), Arg);
 
+            InstrCounter++;
+
+            break;
+
+        case OUT:
+        case ADD:
+        case SUB:
+        case MUL:
+        case DIV:
+        case SQRT:
+        case HLT:
+        case _SKIP_LINE:
+        case _UNDEF:
+        default:
             break;
         }
 

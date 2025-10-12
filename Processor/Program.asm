@@ -1,27 +1,32 @@
 ; solves square equation x^2-5x+6=0
+;5
 
+;6
 push 1
 popr rax; a=1
 
+;10
 push -198
 popr rbx; b=-198
-
+;25
 push 6885
 popr rcx; c=6885
 
 ;------------------
 
-pushr rbx
-pushr rbx
-mul
+:5
+    pushr rbx
+    pushr rbx
+    mul
 
 push 4
 pushr rax
 pushr rcx
 
-mul
-mul
-sub
+:10
+    mul
+    mul
+    sub
 
 sqrt
 popr rdx; d=sqrt(b^2-4ac)
@@ -33,6 +38,7 @@ pushr rdx
 pushr rbx
 sub
 
+jmp :5
 
 push 2
 div
@@ -67,3 +73,22 @@ out
 
 
 hlt
+
+
+
+;7
+    ;here we can do something
+    ;for exaample, 
+    pushr rax
+    push 10
+
+    popr r15
+
+;9
+    ;here we can do something
+    ;for exaample, 
+    pushr rax
+    push 10
+
+    popr r15
+

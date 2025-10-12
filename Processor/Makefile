@@ -1,11 +1,14 @@
 compile_flags = -D _DEBUG -ggdb3 -O0 -Wall -Wextra -Waggressive-loop-optimizations -Wmissing-declarations -Wcast-align -Wcast-qual -Wchar-subscripts -Wconversion -Wempty-body -Wfloat-equal -Wformat-nonliteral -Wformat-security -Wformat-signedness -Wformat=2 -Winline -Wlogical-op -Wopenmp-simd -Wpacked -Wpointer-arith -Winit-self -Wredundant-decls -Wshadow -Wsign-conversion -Wstrict-overflow=2 -Wsuggest-attribute=noreturn -Wsuggest-final-methods -Wsuggest-final-types -Wswitch-default -Wswitch-enum -Wsync-nand -Wundef -Wunreachable-code -Wunused -Wvariadic-macros -Wno-missing-field-initializers -Wno-narrowing -Wno-varargs -Wstack-protector -fcheck-new -fstack-protector -fstrict-overflow -flto-odr-type-merging -fno-omit-frame-pointer -Wlarger-than=8192 -Wstack-usage=8192 -pie -fPIE -fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,leak,nonnull-attribute,null,object-size,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
+linker_flags = -fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,leak,nonnull-attribute,null,object-size,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr
 compiler = g++
-compile_flags =
+
+# compile_flags =
+# linker_flags =
 
 all: main
 
-main:  Common.o Assembler.o Input.o main.o Stack.o DisAssembler.o StrFunctions.o Processor.o
-	$(compiler)  Common.o Assembler.o Input.o main.o Stack.o DisAssembler.o StrFunctions.o Processor.o
+main:  Common.o Assembler.o Input.o main.o Stack.o DisAssembler.o StrFunctions.o Processor.o Preassembler.o
+	$(compiler) $(linker_flags) Common.o Assembler.o Input.o main.o Stack.o DisAssembler.o StrFunctions.o Processor.o Preassembler.o
 
 Assembler.o: Assembler.c
 	$(compiler) -c $(compile_flags) Assembler.c
@@ -30,6 +33,9 @@ StrFunctions.o: StrFunctions.c
 
 Processor.o: Processor.c
 	$(compiler) -c $(compile_flags) Processor.c
+
+Preassembler.o: Preassembler.c
+	$(compiler) -c $(compile_flags) Preassembler.c
 
 clean:
 	rm *.o

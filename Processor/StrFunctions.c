@@ -1,5 +1,15 @@
 #include "StrFunctions.h"
 
+char *SkipSpaces(char *Cursor)
+{
+    assert(Cursor);
+
+    while(*Cursor == ' ' || *Cursor == '\t')
+        Cursor++;
+
+    return Cursor;
+}
+
 static char *CompareAndMove(char *CompInstr, const char *RefInstr)
 {
     assert(CompInstr);
@@ -58,7 +68,9 @@ char *RecognizeAndMove(char *CompInstr, instruction *Instr)
     char *PtrToEnd = NULL;
     *Instr = _UNDEF;
 
-    if(*CompInstr=='\n' || *CompInstr == '\0')
+    CompInstr = SkipSpaces(CompInstr);
+
+    if(*CompInstr == '\n' || *CompInstr == '\0')
     {
         *Instr = _SKIP_LINE;
 
@@ -66,9 +78,9 @@ char *RecognizeAndMove(char *CompInstr, instruction *Instr)
         return NULL;
     }
 
-    for (int i = 0; i < COMMANDS_SIZE / sizeof(char *); i++)
+    for (size_t i = 0; i < COMMANDS_SIZE; i++)
     {
-        if(PtrToEnd = CompareAndMove(CompInstr, COMMANDS[i]))
+        if((PtrToEnd = CompareAndMove(CompInstr, COMMANDS[i])))
         {
             *Instr = (instruction)i;
 
@@ -94,9 +106,9 @@ char *RecognizeRegAndMove(char *CompReg, regs *Reg)
         return NULL;
     }
 
-    for (int i = 0; i < NUM_OF_REGS; i++)
+    for (size_t i = 0; i < NUM_OF_REGS; i++)
     {
-        if(PtrToEnd = CompareAndMove(CompReg, REGS_NAME[i]))
+        if((PtrToEnd = CompareAndMove(CompReg, REGS_NAME[i])))
         {
             *Reg = (regs)i;
 
@@ -125,9 +137,29 @@ bool CheckEndLine(char *Line)
     assert(Line);
 
 
-    while (*Line != '\n' && *Line != '\0' && *Line != EOF)
-        if(*Line++ > ' ')
+    while (*Line != '\n' && *Line != '\0' && *Line != EOF) {
+        if(*Line != ' ' && *Line != '\t')
             return true;
 
+        Line++;
+    }
+
     return false;
+}
+
+unsigned int CountInstrInLine(char *Cursor)
+{
+    assert(Cursor);
+
+    instruction Instr = _UNDEF;
+
+    RecognizeAndMove(Cursor, &Instr);
+
+    if(Instr == POPR || Instr == PUSHR || Instr == PUSH)
+        return 2;
+
+    if(Instr == _SKIP_LINE || Instr == _UNDEF)
+        return 0;
+
+    return 1;
 }

@@ -10,17 +10,24 @@
 int main(void)
 {
 
-    Assemble("Program.asm", "Program.bin");
+    Assemble("Program2.asm", "Program.bin");
 
     DisAssemble("Program.bin");
+
+    //LablesPrint();
+
+    // DisAssemble("Program.bin");
 
     processor p = {};
 
     ProcessorInit(&p, "Program.bin");
 
+    //ProcessorDump(&p);
+
     processor_err_struct_t Err = {};
 
-    LaunchProgram(&p, &Err);
+    if(LaunchProgram(&p, &Err))
+        ProcessorDump(&p, &Err);
 
     ProcessorDestroy(&p);
 

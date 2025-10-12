@@ -1,5 +1,7 @@
 #include "Assembler.h"
-  
+
+#include "AssemblerDo.c"
+/*  
 static bool DoPush(char *Cursor, FILE *Out)
 {
 
@@ -86,12 +88,13 @@ static bool DoPopr(char *Cursor, FILE *Out)
     {
         Cursor++;
         Cursor = RecognizeRegAndMove(Cursor, &Reg);
-        if(Cursor == NULL || CheckEndLine(Cursor))
+        //assert(Cursor);
+        if (Cursor == NULL || CheckEndLine(Cursor))
         {
-            
-            
-            
-            //ErrorStatus = true;
+
+            //printf("Err here\n");
+
+            // ErrorStatus = true;
             return true;
         }
         fprintf(Out, "%d %d ", (int)POPR, (int)Reg);
@@ -101,58 +104,83 @@ static bool DoPopr(char *Cursor, FILE *Out)
     return true;
 }
 
+static bool DoJmpInstr(char *Cursor, FILE *Out, instruction Instr)
+{
+    assert(Cursor);
+    assert(Out);
+
+    long long int Lable = 0;
+
+    if(Cursor[0] == ' ' && Cursor[1] == ':')
+    {
+        Cursor = AtoIAndMove(Cursor + 2, &Lable);
+
+        if(CheckEndLine(Cursor))
+        {
+            return true;
+        }
+
+        fprintf(Out, "%d %d ", (int)Instr, Lables[Lable]);
+
+        return false;
+    }
+
+    return true;
+}
+*/
+
 bool Assemble(const char *InFilePath, const char *OutFilePath)
 {
-    bool ErrorStatus = false;
-
+    //------------------------open files------------------------
     assert(InFilePath);
     assert(OutFilePath);
 
-    //-------------------------------------OPEN--------------------------------
+    bool ErrorStatus = false;
 
+    TableOfContent *CodeLine = NULL;
 
-    char *Program = CreateStrBuffer(InFilePath);
+    unsigned int NumOfLines = 0;
 
-    //printf("buffersize=%llu\n", strlen(Program));
+    if(PreAssemble(InFilePath, &CodeLine, &NumOfLines))
+    {
+        free(CodeLine[0].Line);
+        free(CodeLine);
+
+        return true;
+    }
+
+    
 
     FILE *Out = fopen(OutFilePath, "w");
 
-    if(Program == NULL || Out == NULL)
+    
+
+    if(Out == NULL)
     {
-        free(Program);
-        fclose(Out);
+        _print_err("File(s) can't be opened\n");
 
+        free(CodeLine[0].Line);
+        free(CodeLine);
 
-        _print_err("File(s) can't open\n");
-
-        ErrorStatus = true;
-
-        return ErrorStatus;
+        return true;
     }
 
-    unsigned int NumOfInstructions = 0;
-
-    TableOfContent *Instruction = CreateTOC(Program, &NumOfInstructions, '\n');
-    assert(Instruction);    
-
-    ExcludeComments(Program);
-
-    //-------------------------------------------------------------------------
+    //--------------------start assembly------------------------
 
     printf(colorize("\n\nASSEMBLING IS IN PROGRESS.......", _CYAN_));
-
-    
 
     char *Cursor = NULL;
 
     instruction Instr = _UNDEF;
-
-    long long int Arg = 0;
     
-    for (unsigned int i = 0; i < NumOfInstructions; i++)
+    for (unsigned int i = 0; i < NumOfLines; i++)
     {
-        
-        Cursor = RecognizeAndMove(Instruction[i].Line, &Instr);
+
+        printf("i=%u, s=%s\n", i, CodeLine[i].Line);
+
+        getchar();
+
+        Cursor = RecognizeAndMove(CodeLine[i].Line, &Instr);
 
         switch(Instr)
         {
@@ -162,7 +190,7 @@ bool Assemble(const char *InFilePath, const char *OutFilePath)
             {
                 ErrorStatus = true;
 
-                _print_err("Invalid syntax: pushing value=?\t");
+                _print_err("Invalid syntax: ?pushing value?\t");
                 _print_location(InFilePath, i);
             }
 
@@ -174,7 +202,9 @@ bool Assemble(const char *InFilePath, const char *OutFilePath)
             {
                 ErrorStatus = true;
 
-                _print_err("Invalid syntax: poping value=?\t");
+                printf("%s\n", Cursor);
+
+                _print_err("Invalid syntax: ?poping value?\t");
                 _print_location(InFilePath, i);
             }
 
@@ -186,7 +216,26 @@ bool Assemble(const char *InFilePath, const char *OutFilePath)
             {
                 ErrorStatus = true;
 
-                _print_err("Invalid syntax: pushing value=?\t");
+                _print_err("Invalid syntax: ?pushing value?\t");
+                _print_location(InFilePath, i);
+            }
+
+            break;
+        
+        case JMP:
+        case JB:
+        case JBE:
+        case JA:
+        case JAE:
+        case JE:
+        case JNE:
+
+            //printf("Hello\n");
+            if (DoJmpInstr(Cursor, Out, Instr))
+            {
+                ErrorStatus = true;
+
+                _print_err("Invalid syntax: ?lable?\t");
                 _print_location(InFilePath, i);
             }
 
@@ -205,6 +254,13 @@ bool Assemble(const char *InFilePath, const char *OutFilePath)
         case _SKIP_LINE:
             break;
         
+        case OUT:
+        case ADD:
+        case SUB:
+        case MUL:
+        case DIV:
+        case SQRT:
+        case HLT:
         default:
 
             if(DoInstrWithoutArg(Cursor, Out, Instr))
@@ -222,15 +278,19 @@ bool Assemble(const char *InFilePath, const char *OutFilePath)
 
 
 
-    free(Program);
     fclose(Out);
-    free(Instruction);
+    free(CodeLine[0].Line);
+    free(CodeLine);
 
     if(ErrorStatus)
     {
-        FILE *OUT = fopen(OutFilePath, "w");
-        fputc(EOF, OUT);
-        fclose(OUT);
+        printf(colorize("You're govnocoder, nobody writes worse than you. Think more\n", _GRAY_));
+
+        DisAssemble(OutFilePath);
+
+        Out = fopen(OutFilePath, "w");
+
+        fclose(Out);
 
         printf(colorize("TRANSLATION ERRORS\n", _RED_));
     }
@@ -240,3 +300,12 @@ bool Assemble(const char *InFilePath, const char *OutFilePath)
 
     return ErrorStatus;
 }
+
+void LablesPrint(void)
+{
+    for (int i = 0; i < 50; i++)
+        printf(colorize("[%d]=%d\n", _GREEN_), i, Lables[i]);
+
+    printf(colorize("...\n", _GREEN_));
+}
+
