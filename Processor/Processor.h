@@ -6,8 +6,9 @@
 #include "ColorPrinting.h"
 #include "Common.h"
 
-static const size_t _NUM_OF_REGS = 16;
+//#define DEBUG_MODE
 
+static const size_t _NUM_OF_REGS = 16;
 
 
 typedef struct
@@ -19,7 +20,9 @@ typedef struct
     long long int Regs[NUM_OF_REGS];
     
     stack_t Stk;
-    
+
+    stack_t RetAddr;
+
     long long int *Code;
 
 } processor;
@@ -46,8 +49,6 @@ typedef enum
 
 } regs;
 
-// static const char *REGS_NAME[] =
-//     {"rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};
 
 typedef enum
 {

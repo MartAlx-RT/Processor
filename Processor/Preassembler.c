@@ -2,63 +2,40 @@
 
 bool PreAssemble(const char *InFilePath, TableOfContent *CodeLine[], unsigned int *NumOfLines)
 {
-    //bool ErrorStatus = false;
+    if(InFilePath == NULL)
+        return true;
 
-    assert(InFilePath);
-    assert(CodeLine);
-    // assert(OutFilePath);
+    if(CodeLine == NULL)
+        return true;
 
     //-------------------------------------OPEN--------------------------------
-
-
     char *Cursor = CreateStrBuffer(InFilePath);
-
-    //printf("buffersize=%llu\n", strlen(Program));
-
-    //FILE *Out = fopen(OutFilePath, "w");
 
     if(Cursor == NULL)
     {
-        free(Cursor);
-        //fclose(Out);
-
-
         _print_err("File(s) can't open\n");
 
-        return true;//?
+        return true;
     }
 
-    //unsigned int NumOfLines = 0;
-
     (*CodeLine) = CreateTOC(Cursor, NumOfLines, '\n');
-    assert((*CodeLine));
-
     
+    if(CodeLine == NULL)
+    {
+        _print_err("File is empty\n");
 
-    
-
-    //ExcludeComments(Program);
+        return true;
+    }
 
     struct stat FileInfo = {};
-
     if(stat(InFilePath, &FileInfo))
     {
         _print_err("File(s) can't open\n");
 
         free(Cursor);
 
-        return true;//?
+        return true;
     }
-
-    
-
-    // if(Labels)
-    // {
-    //     _print_err("Labels calloc error\n");
-
-    //     return true;//?
-    // }
-
     //-------------------------------------------------------------------------
 
     ExcludeComments(Cursor);
@@ -72,27 +49,11 @@ bool PreAssemble(const char *InFilePath, TableOfContent *CodeLine[], unsigned in
 
         Cursor = SkipSpaces(Cursor);
 
-        // if (*Cursor == ';')
-        // {
-        //     *Cursor = '\0';
-
-            
-        // }
-
-        /*else*/ if(*Cursor == ':')
+        if(*Cursor == ':')
         {
             *Cursor++ = '\0';
-
             Cursor = AtoIAndMove(Cursor, &Lable);
-
             Cursor = SkipSpaces(Cursor);
-
-            // if (*Cursor == ';')
-            // {
-            //     *Cursor = '\0';
-
-            //     //continue;
-            // }
 
             if(CheckEndLine(Cursor) || Lable >= 1000)
             {
@@ -112,8 +73,6 @@ bool PreAssemble(const char *InFilePath, TableOfContent *CodeLine[], unsigned in
         else
             InstrCounter += CountInstrInLine(Cursor);
     }
-
-    //free(Cursor);
 
     return false;
 }

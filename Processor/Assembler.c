@@ -175,11 +175,6 @@ bool Assemble(const char *InFilePath, const char *OutFilePath)
     
     for (unsigned int i = 0; i < NumOfLines; i++)
     {
-
-        printf("i=%u, s=%s\n", i, CodeLine[i].Line);
-
-        getchar();
-
         Cursor = RecognizeAndMove(CodeLine[i].Line, &Instr);
 
         switch(Instr)
@@ -229,6 +224,7 @@ bool Assemble(const char *InFilePath, const char *OutFilePath)
         case JAE:
         case JE:
         case JNE:
+        case CALL:
 
             //printf("Hello\n");
             if (DoJmpInstr(Cursor, Out, Instr))
@@ -261,6 +257,7 @@ bool Assemble(const char *InFilePath, const char *OutFilePath)
         case DIV:
         case SQRT:
         case HLT:
+        case RET:
         default:
 
             if(DoInstrWithoutArg(Cursor, Out, Instr))
@@ -277,16 +274,18 @@ bool Assemble(const char *InFilePath, const char *OutFilePath)
     }
 
 
-
     fclose(Out);
-    free(CodeLine[0].Line);
+
+    if(CodeLine)
+        free(CodeLine[0].Line);
+    
     free(CodeLine);
 
     if(ErrorStatus)
     {
-        printf(colorize("You're govnocoder, nobody writes worse than you. Think more\n", _GRAY_));
-
         DisAssemble(OutFilePath);
+
+        printf(colorize("Here's your govnocode. Are you silly?\n", _GRAY_));
 
         Out = fopen(OutFilePath, "w");
 

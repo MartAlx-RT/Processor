@@ -5,9 +5,6 @@
 
 bool ProcessorVerifyExt(processor *Proc, processor_err_struct_t *ProcErr)
 {
-
-    
-
     if (Proc == NULL)
     {
         if(ProcErr)
@@ -23,6 +20,9 @@ bool ProcessorVerifyExt(processor *Proc, processor_err_struct_t *ProcErr)
     processor_err_struct_t Err = {};
 
     Err.stack = StackVerify(&(Proc->Stk));
+
+    if(Err.stack == NO_ERR)
+        Err.stack = StackVerify(&(Proc->RetAddr));
 
     if(Err.stack)
         ErrStatus = true;
@@ -64,12 +64,10 @@ bool _ProcessorDump(processor *Proc, processor_err_struct_t *Err, const char *Fi
     if(Proc == NULL)
         return true;
 
-    //printf(colorize("PROCESSOR:\n", _YELLOW_));
     printf(colorize("ProcessorDump called from %s:%u\n", _GRAY_), File, Line);
 
     if (Err->proc || Err->stack)
         printf("Stack Error: %d\nProcessor Error: %d\n", Err->stack, Err->proc);
-    
 
     printf( colorize("processor [%#lx]\n{\n", _CYAN_)
             colorize("NumOfInstr=%lu\nInstrPtr=%lu\n", _MAGENTA_)
@@ -78,25 +76,36 @@ bool _ProcessorDump(processor *Proc, processor_err_struct_t *Err, const char *Fi
             Proc->_NumOfInstr, Proc->InstrPtr,
             (size_t)Proc->Regs);
 
-    // if(Proc->Regs == NULL)
-    //     return true;
-
     for (size_t i = 0; i < NUM_OF_REGS; i++)
         printf(colorize("%s ", _MAGENTA_) colorize("%lld\n", _CYAN_), REGS_NAME[i], Proc->Regs[i]);
 
-    //printf(colorize("STACK:\n", _YELLOW_));
     printf(colorize("}\n", _YELLOW_) "Do you want to see the Stk? [Y/N]\n");
 
-    if(getchar() == 'Y')
+    char c = 0;
+    scanf("%c", &c);
+    if (c == 'Y')
     {
         StackDump(&(Proc->Stk));
     }
-    //printf(colorize("CODE:\n", _YELLOW_));
-    printf(colorize("Code[%#lx]\n{\n", _YELLOW_) "Do you want to see the Code? [Y/N]\n", (size_t)Proc->Code);
 
-    getchar();//scanf()!!
-    
-    if (getchar() == 'Y')
+
+    printf(colorize("}\n", _YELLOW_) "Do you want to see the RetAddr stack? [Y/N]\n");
+    getchar();
+
+    c = 0;
+    scanf("%c", &c);
+    if (c == 'Y')
+    {
+        StackDump(&(Proc->RetAddr));
+    }
+
+
+    printf(colorize("Code[%#lx]\n{\n", _YELLOW_) "Do you want to see the Code? [Y/N]\n", (size_t)Proc->Code);
+    getchar();
+
+    c = 0;
+    scanf("%c", &c);
+    if (c == 'Y')
     {
         for (size_t i = 0; i < Proc->_NumOfInstr; i++)
             printf(colorize("[%lu]=%lld\n", _GREEN_), i, Proc->Code[i]);
@@ -154,6 +163,8 @@ bool ProcessorInitExt(processor *Proc, const char *BinFilePath, processor_err_st
             ProcErr->stack = NO_ERR;
         }
 
+        fclose(BinFile);
+
         return true;
     }
 
@@ -179,9 +190,16 @@ bool ProcessorInitExt(processor *Proc, const char *BinFilePath, processor_err_st
 
     Proc->InstrPtr = 0;
 
+    fclose(BinFile);
+
     if(ProcErr)
     {
         ProcErr->stack = StackInit(&(Proc->Stk), Proc->_NumOfInstr + 1);
+
+        if(ProcErr->stack)
+            return true;
+
+        ProcErr->stack = StackInit(&(Proc->RetAddr), Proc->_NumOfInstr);
 
         if(ProcErr->stack)
             return true;
@@ -190,6 +208,9 @@ bool ProcessorInitExt(processor *Proc, const char *BinFilePath, processor_err_st
     else
     {
         if(StackInit(&(Proc->Stk), Proc->_NumOfInstr + 1))
+            return true;
+        
+        if(StackInit(&(Proc->RetAddr), Proc->_NumOfInstr))
             return true;
     }
 
@@ -215,279 +236,34 @@ void ProcessorDestroy(processor *Proc)
 
     StackDestroy(&(Proc->Stk));
 
+    StackDestroy(&(Proc->RetAddr));
+
     free(Proc->Code);
 
     Proc->Code = NULL;
 }
 
-/*
-static void DoPush(processor *Proc, processor_err_struct_t *Err)
-{
-    assert(Proc);
-    assert(Err);
-
-
-    Err->stack = StackPush(&(Proc->Stk), Proc->Code[++Proc->InstrPtr]);
-
-    Proc->InstrPtr++;
-}
-
-static void DoOut(processor *Proc, processor_err_struct_t *Err)
-{
-    assert(Proc);
-    assert(Err);
-
-
-    long long int Val = 0;
-
-    Err->stack = StackPop(&(Proc->Stk), &Val);
-
-    printf("%lld\n", Val);
-
-    Proc->InstrPtr++;
-}
-
-static void DoAdd(processor *Proc, processor_err_struct_t *Err)
-{
-    assert(Proc);
-    assert(Err);
-
-    long long int Val1 = 0, Val2 = 0;
-
-    Err->stack = StackPop(&(Proc->Stk), &Val1);
-
-    if(Err->stack)
-        return;
-    
-    Err->stack = StackPop(&(Proc->Stk), &Val2);
-
-    if(Err->stack)
-        return;
-    
-    Err->stack = StackPush(&(Proc->Stk), Val1 + Val2);
-    
-    Proc->InstrPtr++;
-
-    //printf("val1=%lld,val2=%lld\n", Val1, Val2);
-    //getchar();
-}
-
-static void DoSub(processor *Proc, processor_err_struct_t *Err)
-{
-    assert(Proc);
-    assert(Err);
-
-    long long int Val1 = 0, Val2 = 0;
-
-    Err->stack = StackPop(&(Proc->Stk), &Val1);
-
-    if(Err->stack)
-        return;
-    
-    Err->stack = StackPop(&(Proc->Stk), &Val2);
-    
-    if(Err->stack)
-        return;
-    
-    Err->stack = StackPush(&(Proc->Stk), Val2 - Val1);
-    
-    Proc->InstrPtr++;
-}
-
-static void DoMul(processor *Proc, processor_err_struct_t *Err)
-{
-    assert(Proc);
-    assert(Err);
-
-    long long int Val1 = 0, Val2 = 0;
-
-    Err->stack = StackPop(&(Proc->Stk), &Val1);
-
-    if(Err->stack)
-        return;
-    
-    Err->stack = StackPop(&(Proc->Stk), &Val2);
-    
-    if(Err->stack)
-        return;
-    
-    Err->stack = StackPush(&(Proc->Stk), Val1 * Val2);
-    
-    Proc->InstrPtr++;
-}
-
-static void DoDiv(processor *Proc, processor_err_struct_t *Err)
-{
-    assert(Proc);
-    assert(Err);
-
-    long long int Val1 = 0, Val2 = 0;
-
-    Err->stack = StackPop(&(Proc->Stk), &Val1);
-
-    if(Err->stack)
-        return;
-    
-    Err->stack = StackPop(&(Proc->Stk), &Val2);
-    
-    if(Err->stack)
-        return;
-    
-    if(Val2 == 0)
-    {
-        printf(colorize("Divizion by zero, aborted\n", _RED_));
-        
-        return;
-    }
-    
-    Err->stack = StackPush(&(Proc->Stk), Val2 / Val1);
-    
-    Proc->InstrPtr++;
-}
-
-static void DoSqrt(processor *Proc, processor_err_struct_t *Err)
-{
-
-    assert(Proc);
-    assert(Err);
-
-
-    long long int Val = 0;
-
-    Err->stack = StackPop(&(Proc->Stk), &Val);
-
-    if(Err->stack)
-        return;
-
-    if(Val < 0)
-    {
-        printf(colorize("SQRT of negative number, aborted\n", _RED_));
-
-        return;
-    }
-
-    Err->stack = StackPush(&(Proc->Stk), (long long int)sqrt((double)Val));
-
-    Proc->InstrPtr++;
-}
-
-static void DoPushr(processor *Proc, processor_err_struct_t *Err)
-{
-    assert(Proc);
-    assert(Err);
-
-    Err->stack = StackPush(&(Proc->Stk), Proc->Regs[Proc->Code[++Proc->InstrPtr]]);
-
-    Proc->InstrPtr++;
-}
-
-static void DoPopr(processor *Proc, processor_err_struct_t *Err)
-{
-    assert(Proc);
-    assert(Err);
-
-    Err->stack = StackPop(&(Proc->Stk), &(Proc->Regs[Proc->Code[++Proc->InstrPtr]]));
-
-    Proc->InstrPtr++;
-}
-
-
-static void DoJmp(processor *Proc, processor_err_struct_t *Err, bool (*Comp) (long long int, long long int))
-{
-    assert(Proc);
-    assert(Err);
-
-    if(Comp == NULL)
-    {
-        Proc->InstrPtr = (size_t)Proc->Code[Proc->InstrPtr + 1];
-
-        return;
-    }
-
-    long long Val1 = 0, Val2 = 0;
-
-    Err->stack = StackPop(&(Proc->Stk), &Val1);
-
-    if(Err->stack)
-        return;
-    
-    Err->stack = StackPop(&(Proc->Stk), &Val2);
-
-    if(Err->stack)
-        return;
-    
-    if(Comp(Val1, Val2))
-        Proc->InstrPtr = (size_t)Proc->Code[Proc->InstrPtr + 1];
-    
-    else
-        Proc->InstrPtr += 2;
-}
-
-
-static bool Below(long long int Val1, long long int Val2)
-{
-    return (Val1 < Val2);
-}
-
-static bool BelowOrEqual(long long int Val1, long long int Val2)
-{
-    return (Val1 <= Val2);
-}
-
-static bool Above(long long int Val1, long long int Val2)
-{
-    return (Val1 > Val2);
-}
-
-static bool AboveOrEqual(long long int Val1, long long int Val2)
-{
-    return (Val1 >= Val2);
-}
-
-static bool Equal(long long int Val1, long long int Val2)
-{
-    return (Val1 == Val2);
-}
-
-static bool NotEqual(long long int Val1, long long int Val2)
-{
-    return (Val1 != Val2);
-}
-*/
 
 bool LaunchProgram(processor *Proc, processor_err_struct_t *Err)
 {
-    //getchar();
-    assert(Err);
+    if(Err == NULL)
+        return true;
 
     if(ProcessorVerifyExt(Proc, Err))
         return true;
 
     Proc->InstrPtr = 0;
-
-    //long long int Val = 0, Val1 = 0, Val2 = 0;
-
     while(Proc->InstrPtr < Proc->_NumOfInstr)
     {
         switch(Proc->Code[Proc->InstrPtr])
         {
         case PUSH:
 
-            // Err->stack = StackPush(&(Proc->Stk), Proc->Code[++Proc->InstrPtr]);
-
-            // Proc->InstrPtr++;
-
             DoPush(Proc, Err);
 
             break;
-        
+      
         case OUT:
-
-            // Err->stack = StackPop(&(Proc->Stk), &Val);
-
-            // printf("%lld\n", Val);
-
-            // Proc->InstrPtr++;
 
             DoOut(Proc, Err);
 
@@ -496,7 +272,19 @@ bool LaunchProgram(processor *Proc, processor_err_struct_t *Err)
         case HLT:
 
             if(Err->proc == PROC_NO_ERR && Err->stack == NO_ERR)
+            {
+                #ifdef DEBUG_MODE
+                ProcessorDump(Proc, Err);
+                #endif
+
+                printf(colorize("Program finished\n", _GRAY_));
+                
                 return false;
+            }
+
+            #ifdef DEBUG_MODE
+            ProcessorDump(Proc, Err);
+            #endif
 
             return true;
 
@@ -504,39 +292,11 @@ bool LaunchProgram(processor *Proc, processor_err_struct_t *Err)
         
         case ADD:
 
-            // Err->stack = StackPop(&(Proc->Stk), &Val1);
-
-            // if(Err->stack)
-            //     return true;
-            
-            // Err->stack = StackPop(&(Proc->Stk), &Val2);
-
-            // if(Err->stack)
-            //     return true;
-
-            // Err->stack = StackPush(&(Proc->Stk), Val1 + Val2);
-
-            // Proc->InstrPtr++;
-
             DoAdd(Proc, Err);
 
             break;
         
         case SUB:
-
-            // Err->stack = StackPop(&(Proc->Stk), &Val1);
-
-            // if(Err->stack)
-            //     return true;
-            
-            // Err->stack = StackPop(&(Proc->Stk), &Val2);
-
-            // if(Err->stack)
-            //     return true;
-
-            // Err->stack = StackPush(&(Proc->Stk), Val2 - Val1);
-
-            // Proc->InstrPtr++;
 
             DoSub(Proc, Err);
 
@@ -544,46 +304,11 @@ bool LaunchProgram(processor *Proc, processor_err_struct_t *Err)
         
         case MUL:
 
-            // Err->stack = StackPop(&(Proc->Stk), &Val1);
-
-            // if(Err->stack)
-            //     return true;
-            
-            // Err->stack = StackPop(&(Proc->Stk), &Val2);
-
-            // if(Err->stack)
-            //     return true;
-
-            // Err->stack = StackPush(&(Proc->Stk), Val1 * Val2);
-
-            // Proc->InstrPtr++;
-
             DoMul(Proc, Err);
 
             break;
         
         case DIV:
-
-            // Err->stack = StackPop(&(Proc->Stk), &Val1);
-
-            // if(Err->stack)
-            //     return true;
-            
-            // Err->stack = StackPop(&(Proc->Stk), &Val2);
-
-            // if(Err->stack)
-            //     return true;
-
-            // if(Val2 == 0)
-            // {
-            //     printf(colorize("Divizion by zero, aborted\n", _RED_));
-
-            //     return true;
-            // }
-
-            // Err->stack = StackPush(&(Proc->Stk), Val2 / Val1);
-
-            // Proc->InstrPtr++;
 
             DoDiv(Proc, Err);
 
@@ -591,31 +316,11 @@ bool LaunchProgram(processor *Proc, processor_err_struct_t *Err)
         
         case SQRT:
 
-            // Err->stack = StackPop(&(Proc->Stk), &Val);
-
-            // if(Err->stack)
-            //     return true;
-
-            // if(Val < 0)
-            // {
-            //     printf(colorize("SQRT of negative number, aborted\n", _RED_));
-
-            //     return true;
-            // }
-
-            // Err->stack = StackPush(&(Proc->Stk), (long long int)sqrt((double)Val));
-
-            // Proc->InstrPtr++;
-
             DoSqrt(Proc, Err);
 
             break;
         
         case PUSHR:
-
-            // Err->stack = StackPush(&(Proc->Stk), Proc->Regs[Proc->Code[++Proc->InstrPtr]]);
-
-            // Proc->InstrPtr++;
 
             DoPushr(Proc, Err);
 
@@ -623,16 +328,12 @@ bool LaunchProgram(processor *Proc, processor_err_struct_t *Err)
         
         case POPR:
 
-            // Err->stack = StackPop(&(Proc->Stk), &(Proc->Regs[Proc->Code[++Proc->InstrPtr]]));
-
-            // Proc->InstrPtr++;
-
             DoPopr(Proc, Err);
 
             break;
         
         case JMP:
-
+        
             DoJmp(Proc, Err, NULL);
 
             break;
@@ -672,6 +373,18 @@ bool LaunchProgram(processor *Proc, processor_err_struct_t *Err)
             DoJmp(Proc, Err, NotEqual);
 
             break;
+        
+        case CALL:
+
+            DoCall(Proc, Err);
+
+            break;
+
+        case RET:
+
+            DoRet(Proc, Err);
+
+            break;
 
         default:
 
@@ -682,17 +395,20 @@ bool LaunchProgram(processor *Proc, processor_err_struct_t *Err)
             break;
         }
 
+        #ifdef DEBUG_MODE
+        ProcessorDump(Proc, Err);
+        
+        printf("Continue?\n");
+
+        getchar();
+        getchar();
+        #endif
+
         if(Err->proc || Err->stack)
             return true;
         
         if(ProcessorVerifyExt(Proc, Err))
             return true;
-
-        // ProcessorDump(Proc);
-
-        // printf("Continue? ");
-
-        // getchar();
     }
 
     printf(colorize("Program finished\n", _GRAY_));

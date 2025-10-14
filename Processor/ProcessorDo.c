@@ -204,3 +204,24 @@ static void DoJmp(processor *Proc, processor_err_struct_t *Err, bool (*Comp) (lo
         Proc->InstrPtr += 2;
 }
 
+static void DoCall(processor *Proc, processor_err_struct_t *Err)
+{
+    assert(Proc);
+    assert(Err);
+
+    Err->stack = StackPush(&(Proc->RetAddr), (data_t)Proc->InstrPtr + 2);
+
+    DoJmp(Proc, Err, NULL);
+}
+
+static void DoRet(processor *Proc, processor_err_struct_t *Err)
+{
+    assert(Proc);
+    assert(Err);
+
+    long long int Addr = 0;
+
+    Err->stack = StackPop(&(Proc->RetAddr), &Addr);
+
+    Proc->InstrPtr = (size_t)Addr;
+}

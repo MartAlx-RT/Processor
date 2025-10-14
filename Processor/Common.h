@@ -31,6 +31,8 @@ typedef enum
     JAE,
     JE,
     JNE,
+    CALL,
+    RET,
 
     _SKIP_LINE,
     _UNDEF

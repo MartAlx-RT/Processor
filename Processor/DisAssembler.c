@@ -59,7 +59,7 @@ void DisAssemble(const char *ByteCodePath)
             continue;
         }
 
-        printf(colorize("%3u |", _CYAN_) colorize("%s", _MAGENTA_), InstrCounter++, ReverseRecognize(Instr));
+        printf(colorize("%5u |", _CYAN_) colorize("%s", _MAGENTA_), InstrCounter++, ReverseRecognize(Instr));
 
         int I_Reg = 0;
         switch (Instr)
@@ -94,6 +94,7 @@ void DisAssemble(const char *ByteCodePath)
         case JE:
         case JNE:
         case JMP:
+        case CALL:
 
             fscanf(ByteCode, "%lld", &Arg);
 
@@ -110,6 +111,7 @@ void DisAssemble(const char *ByteCodePath)
         case DIV:
         case SQRT:
         case HLT:
+        case RET:
         case _SKIP_LINE:
         case _UNDEF:
         default:
