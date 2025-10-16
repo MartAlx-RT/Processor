@@ -4,11 +4,12 @@ compiler = g++
 
 # compile_flags =
 # linker_flags =
+# compiler = gcc
 
 all: main
 
-main:  Common.o Assembler.o Input.o main.o Stack.o DisAssembler.o StrFunctions.o Processor.o Preassembler.o
-	$(compiler) $(linker_flags) Common.o Assembler.o Input.o main.o Stack.o DisAssembler.o StrFunctions.o Processor.o Preassembler.o
+main:  Common.o Assembler.o Input.o main.o Stack.o DisAssembler.o StrFunctions.o Processor.o JmpComparators.o Init_Destroy.o
+	$(compiler) $(linker_flags) Common.o Assembler.o Input.o main.o Stack.o DisAssembler.o StrFunctions.o Processor.o JmpComparators.o Init_Destroy.o -lm
 
 Assembler.o: Assembler.c
 	$(compiler) -c $(compile_flags) Assembler.c
@@ -34,8 +35,19 @@ StrFunctions.o: StrFunctions.c
 Processor.o: Processor.c
 	$(compiler) -c $(compile_flags) Processor.c
 
-Preassembler.o: Preassembler.c
-	$(compiler) -c $(compile_flags) Preassembler.c
+# Preassembler.o: Preassembler.c
+# 	$(compiler) -c $(compile_flags) Preassembler.c
+# AssemblerDo.o: AssemblerDo.c
+# 	$(compiler) -c $(compile_flags) AssemblerDo.c
+
+# ProcessorDo.o: ProcessorDo.c
+# 	$(compiler) -c $(compile_flags) ProcessorDo.c
+
+JmpComparators.o: JmpComparators.c
+	$(compiler) -c $(compile_flags) JmpComparators.c
+
+Init_Destroy.o: Init_Destroy.c
+	$(compiler) -c $(compile_flags) Init_Destroy.c
 
 clean:
 	rm *.o

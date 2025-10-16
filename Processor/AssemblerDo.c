@@ -16,10 +16,6 @@ static bool DoPush(char *Cursor, FILE *Out)
         Cursor = AtoIAndMove(Cursor, &Arg);
         if(Cursor == NULL || CheckEndLine(Cursor))
         {
-            
-            
-            
-            //ErrorStatus = true;
             return true;
         }
         fprintf(Out, "%d %lld ", (int)PUSH, Arg);
@@ -27,7 +23,6 @@ static bool DoPush(char *Cursor, FILE *Out)
     }
 
     return true;
-    // ErrorStatus = true;
 }
 
 static bool DoInstrWithoutArg(char *Cursor, FILE *Out, instruction Instr)
@@ -37,10 +32,6 @@ static bool DoInstrWithoutArg(char *Cursor, FILE *Out, instruction Instr)
 
     if (CheckEndLine(Cursor))
     {
-
-    // _print_err("Invalid syntax\t");
-    // _print_location(InFilePath, i);
-
         return true;
     }
 
@@ -49,7 +40,32 @@ static bool DoInstrWithoutArg(char *Cursor, FILE *Out, instruction Instr)
     return false;
 }
 
-static bool DoPushr(char *Cursor, FILE *Out)
+static bool DoJmpInstr(char *Cursor, FILE *Out, instruction Instr, int *LabelsArr)
+{
+    assert(Cursor);
+    assert(Out);
+    assert(LabelsArr);
+
+    long long int Lable = 0;
+
+    if(Cursor[0] == ' ' && Cursor[1] == ':')
+    {
+        Cursor = AtoIAndMove(Cursor + 2, &Lable);
+
+        if(CheckEndLine(Cursor))
+        {
+            return true;
+        }
+
+        fprintf(Out, "%d %d ", (int)Instr, LabelsArr[Lable]);
+
+        return false;
+    }
+
+    return true;
+}
+
+static bool DoPushrPoprInstr(char *Cursor, FILE *Out, const instruction Instr)
 {
     assert(Cursor);
     assert(Out);
@@ -63,68 +79,56 @@ static bool DoPushr(char *Cursor, FILE *Out)
 
         if(Cursor == NULL || CheckEndLine(Cursor))
         {
-
-            //printf("Error here\n");
-
-            //ErrorStatus = true;
             return true;
         }
-        fprintf(Out, "%d %d ", (int)PUSHR, (int)Reg);
+        fprintf(Out, "%d %d ", (int)Instr, (int)Reg);
         return false;
     }
 
     return true;
-
 }
 
-static bool DoPopr(char *Cursor, FILE *Out)
+static bool DoPushmPopmInstr(char *Cursor, FILE *Out, const instruction Instr)
 {
     assert(Cursor);
     assert(Out);
 
     regs Reg = UNDEF_REG;
 
-    if (Cursor[0] == ' ')
+    char RegStr[5] = "";
+
+    if(Cursor[0] == ' ' && Cursor[1] == '[')
     {
-        Cursor++;
-        Cursor = RecognizeRegAndMove(Cursor, &Reg);
-        //assert(Cursor);
-        if (Cursor == NULL || CheckEndLine(Cursor))
-        {
+        Cursor += 2;
 
-            //printf("Err here\n");
-
-            // ErrorStatus = true;
+        for (int i = 0; i < 4 && *Cursor; i++)
+            RegStr[i] = *Cursor++;
+        
+        if(*Cursor > ' ')
             return true;
+
+        if(RegStr[2] == ']')
+            RegStr[2] = '\0';
+        
+        else if(RegStr[3] == ']')
+            RegStr[3] = '\0';
+        
+        else
+            return true;
+
+        //printf("%s\n",RegStr);
+
+
+
+        if(RecognizeRegAndMove(RegStr, &Reg) && !CheckEndLine(Cursor))
+        {
+            fprintf(Out, "%d %d ", (int)Instr, (int)Reg);
+            
+            return false;
         }
-        fprintf(Out, "%d %d ", (int)POPR, (int)Reg);
-        return false;
+
+        return true;
     }
 
     return true;
 }
-
-static bool DoJmpInstr(char *Cursor, FILE *Out, instruction Instr)
-{
-    assert(Cursor);
-    assert(Out);
-
-    long long int Lable = 0;
-
-    if(Cursor[0] == ' ' && Cursor[1] == ':')
-    {
-        Cursor = AtoIAndMove(Cursor + 2, &Lable);
-
-        if(CheckEndLine(Cursor))
-        {
-            return true;
-        }
-
-        fprintf(Out, "%d %d ", (int)Instr, Lables[Lable]);
-
-        return false;
-    }
-
-    return true;
-}
-

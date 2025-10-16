@@ -106,6 +106,8 @@ char *RecognizeRegAndMove(char *CompReg, regs *Reg)
         return NULL;
     }
 
+    //printf("%s\n", CompReg);
+
     for (size_t i = 0; i < NUM_OF_REGS; i++)
     {
         if((PtrToEnd = CompareAndMove(CompReg, REGS_NAME[i])))
@@ -131,7 +133,7 @@ void ExcludeComments(char *Program)
     }
 }
 
-//true in error case
+
 bool CheckEndLine(char *Line)
 {
     assert(Line);
@@ -155,11 +157,44 @@ unsigned int CountInstrInLine(char *Cursor)
 
     RecognizeAndMove(Cursor, &Instr);
 
-    if(Instr == POPR || Instr == PUSHR || Instr == PUSH)
+    switch (Instr)
+    {
+    case OUT:
+    case HLT:
+    case ADD:
+    case SUB:
+    case MUL:
+    case DIV:
+    case SQRT:
+    case RET:
+
+        return 1;
+        break;
+    
+    case PUSH:
+    case PUSHR:
+    case POPR:
+    case PUSHM:
+    case POPM:
+    case JMP:
+    case JB:
+    case JBE:
+    case JA:
+    case JAE:
+    case JE:
+    case JNE:
+    case CALL:
+
         return 2;
+        break;
+    
+    case _SKIP_LINE:
+    case _UNDEF:
+    default:
 
-    if(Instr == _SKIP_LINE || Instr == _UNDEF)
         return 0;
+        break;
+    }
 
-    return 1;
+    return (unsigned int)-1;
 }

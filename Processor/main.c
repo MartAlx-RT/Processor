@@ -18,6 +18,7 @@ int main(void)
 
     // DisAssemble("Program.bin");
 
+    
     processor p = {};
 
     ProcessorInit(&p, "Program.bin");
@@ -30,7 +31,7 @@ int main(void)
         ProcessorDump(&p, &Err);
 
     ProcessorDestroy(&p);
-
+    
     return 0;
 
     

@@ -59,7 +59,7 @@ void DisAssemble(const char *ByteCodePath)
             continue;
         }
 
-        printf(colorize("%5u |", _CYAN_) colorize("%s", _MAGENTA_), InstrCounter++, ReverseRecognize(Instr));
+        printf(colorize("%5u |", _CYAN_) colorize("%6s", _MAGENTA_), InstrCounter++, ReverseRecognize(Instr));
 
         int I_Reg = 0;
         switch (Instr)
@@ -99,6 +99,17 @@ void DisAssemble(const char *ByteCodePath)
             fscanf(ByteCode, "%lld", &Arg);
 
             printf(colorize(" :%lld", _YELLOW_), Arg);
+
+            InstrCounter++;
+
+            break;
+        
+        case PUSHM:
+        case POPM:
+
+            fscanf(ByteCode, "%lld", &Arg);
+
+            printf(colorize(" [%s]", _BLUE_), ReverseRegRecognize((regs)Arg));
 
             InstrCounter++;
 
