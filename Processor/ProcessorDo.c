@@ -1,4 +1,5 @@
-#pragma once
+//#pragma once
+//DONT FORGET TO ADD ++IP!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #include "Processor.h"
 
@@ -248,10 +249,12 @@ static void DoRet(processor *SPU, processor_err_struct_t *Err)
     SPU->InstrPtr = (size_t)Addr;
 }
 
-static void DoPushm(processor *SPU, processor_err_struct_t *Err)
+static void DoPushm(processor *SPU, long long int *Mem, const unsigned int MemSize, 
+                    const processor_err_t SegFaultErr, processor_err_struct_t *Err)
 {
     assert(SPU);
     assert(Err);
+    assert(Mem);
 
     if(SPU->Code[SPU->InstrPtr + 1] >= (long long int)NUM_OF_REGS || SPU->Code[SPU->InstrPtr + 1] < 0)
     {
@@ -262,24 +265,30 @@ static void DoPushm(processor *SPU, processor_err_struct_t *Err)
         return;
     }
 
-    if(SPU->Regs[SPU->Code[SPU->InstrPtr + 1]] >= RAM_SIZE || SPU->Regs[SPU->Code[SPU->InstrPtr + 1]] < 0)
+    if(SPU->Regs[SPU->Code[SPU->InstrPtr + 1]] >= MemSize || SPU->Regs[SPU->Code[SPU->InstrPtr + 1]] < 0)
     {
-        Err->proc = SEG_FAULT;
+        Err->proc = SegFaultErr;
 
-        printf(colorize("Segmentation fault, ahhahah ...\t", _GRAY_) colorize("Aborted.\n", _RED_));
+        if(SegFaultErr == RAM_SEG_FAULT)
+            printf(colorize("RAM SEGMENTATION FAULT, aborted.\n", _RED_));
+        
+        else if(SegFaultErr == VRAM_SEG_FAULT)
+            printf(colorize("VRAM SEGMENTATION FAULT, aborted.\n", _RED_));
 
         return;
     }
 
-    Err->stack = StackPush(&(SPU->Stk), SPU->RAM[SPU->Regs[SPU->Code[++SPU->InstrPtr]]]);
+    Err->stack = StackPush(&(SPU->Stk), Mem[SPU->Regs[SPU->Code[++SPU->InstrPtr]]]);
 
     SPU->InstrPtr++;
 }
 
-static void DoPopm(processor *SPU, processor_err_struct_t *Err)
+static void DoPopm(processor *SPU, long long int *Mem, const unsigned int MemSize, 
+                    const processor_err_t SegFaultErr, processor_err_struct_t *Err)
 {
     assert(SPU);
     assert(Err);
+    assert(Mem);
 
     if(SPU->Code[SPU->InstrPtr + 1] >= (long long int)NUM_OF_REGS || SPU->Code[SPU->InstrPtr + 1] < 0)
     {
@@ -290,16 +299,50 @@ static void DoPopm(processor *SPU, processor_err_struct_t *Err)
         return;
     }
 
-    if(SPU->Regs[SPU->Code[SPU->InstrPtr + 1]] >= RAM_SIZE || SPU->Regs[SPU->Code[SPU->InstrPtr + 1]] < 0)
+    if(SPU->Regs[SPU->Code[SPU->InstrPtr + 1]] >= MemSize || SPU->Regs[SPU->Code[SPU->InstrPtr + 1]] < 0)
     {
-        Err->proc = SEG_FAULT;
+        Err->proc = SegFaultErr;
 
-        printf(colorize("Segmentation fault, ahhahah ...", _GRAY_) colorize("Aborted.\n", _RED_));
+        if(SegFaultErr == RAM_SEG_FAULT)
+            printf(colorize("RAM SEGMENTATION FAULT, aborted.\n", _RED_));
+        
+        else if(SegFaultErr == VRAM_SEG_FAULT)
+            printf(colorize("VRAM SEGMENTATION FAULT, aborted.\n", _RED_));
 
         return;
     }
 
-    Err->stack = StackPop(&(SPU->Stk), SPU->RAM + SPU->Regs[SPU->Code[++SPU->InstrPtr]]);
+    Err->stack = StackPop(&(SPU->Stk), Mem + SPU->Regs[SPU->Code[++SPU->InstrPtr]]);
 
     SPU->InstrPtr++;
 }
+
+static void DoDrw(processor *SPU, processor_err_struct_t *Err, WINDOW **Win)
+{
+    assert(SPU);
+    assert(Err);
+    assert(Win);
+
+    if(*Win == NULL)
+    {
+        *Win = GraphicsInit();
+        if(*Win == NULL)
+        {
+            //printf("Hello1\n");
+            Err->proc = CONSOLE_ERR;
+
+            return;
+        }
+    }
+
+    if(Draw(SPU->VRAM, *Win))
+    {
+        //printf("Hello2\n");
+        Err->proc = CONSOLE_ERR;
+
+        return;
+    }
+
+    SPU->InstrPtr++;
+}
+

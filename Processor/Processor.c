@@ -10,6 +10,9 @@ bool LaunchProgram(processor *SPU, processor_err_struct_t *Err)
     if(ProcessorVerifyExt(SPU, Err))
         return true;
 
+    
+    WINDOW *Win = NULL;
+
     SPU->InstrPtr = 0;
     while(SPU->InstrPtr < SPU->_NumOfInstr)
     {
@@ -35,14 +38,18 @@ bool LaunchProgram(processor *SPU, processor_err_struct_t *Err)
                 ProcessorDump(SPU, Err);
                 #endif
 
-                printf(colorize("Program finished\n", _GRAY_));
+                GraphicsDestroy(&Win);
                 
+                printf(colorize("Program finished\n", _GRAY_));
+
                 return false;
             }
 
-            #ifdef DEBUG_MODE
+            GraphicsDestroy(&Win);
+
+#ifdef DEBUG_MODE
             ProcessorDump(SPU, Err);
-            #endif
+#endif
 
             return true;
 
@@ -146,17 +153,53 @@ bool LaunchProgram(processor *SPU, processor_err_struct_t *Err)
         
         case PUSHM:
 
-            DoPushm(SPU, Err);
+            DoPushm(SPU, SPU->RAM, RAM_SIZE, RAM_SEG_FAULT, Err);
 
             break;
         
         case POPM:
 
-            DoPopm(SPU, Err);
+            DoPopm(SPU, SPU->RAM, RAM_SIZE, RAM_SEG_FAULT, Err);
+
+            break;
+        
+        case PUSHV:
+
+            DoPushm(SPU, SPU->VRAM, VRAM_SIZE, VRAM_SEG_FAULT, Err);
+
+            break;
+        
+        case POPV:
+
+            DoPopm(SPU, SPU->VRAM, VRAM_SIZE, VRAM_SEG_FAULT, Err);
+
+            break;
+        
+        case DRW:
+
+            DoDrw(SPU, Err, &Win);
+
+            break;
+        
+        case PAUSE:
+
+            assert(Win);
+            if (Win)
+                getch();
+            
+            else
+                getchar();
+
+            SPU->InstrPtr++;
+
+            // printw("press any key for quit\n");
+            // refresh();
 
             break;
 
         default:
+
+            GraphicsDestroy(&Win);
 
             printf(colorize("Wrong bytecode, aborted\n", _RED_));
 
@@ -165,23 +208,29 @@ bool LaunchProgram(processor *SPU, processor_err_struct_t *Err)
             break;
         }
 
-        #ifdef DEBUG_MODE
+#ifdef DEBUG_MODE
         ProcessorDump(SPU, Err);
         
         printf("Continue?\n");
 
         getchar();
         getchar();
-        #endif
+#endif
 
         if(Err->proc || Err->stack)
+        {
+            GraphicsDestroy(&Win);
+            
             return true;
+        }
         
         if(ProcessorVerifyExt(SPU, Err))
             return true;
     }
 
-    printf(colorize("Program finished\n", _GRAY_));
+    GraphicsDestroy(&Win);
+
+    printf(colorize("Missing 'hlt', program finished\n", _GRAY_));
 
     return false;
 }

@@ -10,7 +10,7 @@
 int main(void)
 {
 
-    Assemble("Program2.asm", "Program.bin");
+    Assemble("Program.asm", "Program.bin");
 
     DisAssemble("Program.bin");
 

@@ -34,6 +34,10 @@ typedef enum
     RET,
     PUSHM,
     POPM,
+    PUSHV,
+    POPV,
+    DRW,
+    PAUSE,
 
     _SKIP_LINE,
     _UNDEF

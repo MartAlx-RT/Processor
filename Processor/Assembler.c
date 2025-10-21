@@ -198,6 +198,30 @@ bool Assemble(const char *InFilePath, const char *OutFilePath)
             }
 
             break;
+        
+        case PUSHV:
+
+            if(DoPushmPopmInstr(Cursor, Out, PUSHV))
+            {
+                ErrorStatus = true;
+
+                _print_err("Invalid syntax: pushv [?register?]\t");
+                _print_location(InFilePath, i);
+            }
+
+            break;
+        
+        case POPV:
+
+            if(DoPushmPopmInstr(Cursor, Out, POPV))
+            {
+                ErrorStatus = true;
+
+                _print_err("Invalid syntax: popv [?register?]\t");
+                _print_location(InFilePath, i);
+            }
+
+            break;
 
         case JMP:
         case JB:
@@ -239,6 +263,8 @@ bool Assemble(const char *InFilePath, const char *OutFilePath)
         case SQRT:
         case HLT:
         case RET:
+        case DRW:
+        case PAUSE:
         default:
 
             if(DoInstrWithoutArg(Cursor, Out, Instr))

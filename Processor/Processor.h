@@ -5,10 +5,14 @@
 #include <stdbool.h>
 #include "ColorPrinting.h"
 #include "Common.h"
+#include "GraphicalInterface.h"
 //#include "ProcessorDo.h"
+
 
 //#define DEBUG_MODE
 static const unsigned int RAM_SIZE = 1000;
+static const unsigned int VRAM_SIZE = 100 * 100;
+
 
 typedef enum
 {
@@ -54,6 +58,8 @@ typedef struct
 
     long long int *RAM;
 
+    long long int *VRAM;
+
 } processor;
 
 typedef enum
@@ -65,9 +71,12 @@ typedef enum
     WRONG_FILE,
     WRONG_IP,
     RAM_NULLPTR,
+    VRAM_NULLPTR,
     DIV_BY_ZERO,
     SQRT_OF_NEGATIVE,
-    SEG_FAULT,
+    RAM_SEG_FAULT,//hz
+    VRAM_SEG_FAULT,
+    CONSOLE_ERR,
 
     PROC_UNDEFINED_ERR
 

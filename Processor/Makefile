@@ -8,8 +8,8 @@ compiler = g++
 
 all: main
 
-main:  Common.o Assembler.o Input.o main.o Stack.o DisAssembler.o StrFunctions.o Processor.o JmpComparators.o Init_Destroy.o
-	$(compiler) $(linker_flags) Common.o Assembler.o Input.o main.o Stack.o DisAssembler.o StrFunctions.o Processor.o JmpComparators.o Init_Destroy.o -lm
+main:  Common.o Assembler.o Input.o main.o Stack.o DisAssembler.o StrFunctions.o Processor.o JmpComparators.o Proc_Init_Destroy.o GraphicalInterface.o
+	$(compiler) $(linker_flags) Common.o Assembler.o Input.o main.o Stack.o DisAssembler.o StrFunctions.o Processor.o JmpComparators.o Proc_Init_Destroy.o GraphicalInterface.o -lm -lncursesw
 
 Assembler.o: Assembler.c
 	$(compiler) -c $(compile_flags) Assembler.c
@@ -46,8 +46,11 @@ Processor.o: Processor.c
 JmpComparators.o: JmpComparators.c
 	$(compiler) -c $(compile_flags) JmpComparators.c
 
-Init_Destroy.o: Init_Destroy.c
-	$(compiler) -c $(compile_flags) Init_Destroy.c
+Proc_Init_Destroy.o: Proc_Init_Destroy.c
+	$(compiler) -c $(compile_flags) Proc_Init_Destroy.c
+
+GraphicalInterface.o: GraphicalInterface.c
+	$(compiler) -c $(compile_flags) GraphicalInterface.c
 
 clean:
 	rm *.o

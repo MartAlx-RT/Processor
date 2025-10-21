@@ -106,6 +106,8 @@ void DisAssemble(const char *ByteCodePath)
         
         case PUSHM:
         case POPM:
+        case PUSHV:
+        case POPV:
 
             fscanf(ByteCode, "%lld", &Arg);
 
@@ -123,6 +125,8 @@ void DisAssemble(const char *ByteCodePath)
         case SQRT:
         case HLT:
         case RET:
+        case DRW:
+        case PAUSE:
         case _SKIP_LINE:
         case _UNDEF:
         default:

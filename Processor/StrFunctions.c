@@ -167,6 +167,8 @@ unsigned int CountInstrInLine(char *Cursor)
     case DIV:
     case SQRT:
     case RET:
+    case DRW:
+    case PAUSE:
 
         return 1;
         break;
@@ -176,6 +178,8 @@ unsigned int CountInstrInLine(char *Cursor)
     case POPR:
     case PUSHM:
     case POPM:
+    case PUSHV:
+    case POPV:
     case JMP:
     case JB:
     case JBE:
@@ -198,3 +202,4 @@ unsigned int CountInstrInLine(char *Cursor)
 
     return (unsigned int)-1;
 }
+
