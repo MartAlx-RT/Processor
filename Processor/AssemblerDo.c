@@ -42,24 +42,29 @@ static bool DoInstrWithoutArg(char *Cursor, FILE *Out, instruction Instr)
     return false;
 }
 
-static bool DoJmpInstr(char *Cursor, FILE *Out, instruction Instr, int *LabelsArr)
+static bool DoJmpInstr(char *Cursor, FILE *Out, instruction Instr, label *Label, size_t NumOfLabels)
 {
     assert(Cursor);
     assert(Out);
-    assert(LabelsArr);
+    assert(Label);
+    assert(NumOfLabels);
 
-    long long int Lable = 0;
+    //long long int Lable = 0;
+
+    long long int LabelLoc = 0;
 
     if(Cursor[0] == ' ' && Cursor[1] == ':')
     {
-        Cursor = AtoIAndMove(Cursor + 2, &Lable);
+        //Cursor = AtoIAndMove(Cursor + 2, &Lable);
+
+        Cursor = RecognizeLabelAndMove(Cursor + 2, Label, NumOfLabels, &LabelLoc);
 
         if(CheckEndLine(Cursor))
         {
             return true;
         }
 
-        fprintf(Out, "%d %d ", (int)Instr, LabelsArr[Lable]);
+        fprintf(Out, "%d %lld ", (int)Instr, LabelLoc);
 
         return false;
     }

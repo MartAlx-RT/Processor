@@ -2,28 +2,30 @@
 
 #include "AssemblerDo.c"
 
-static bool PreAssemble(const char *InFilePath, TableOfContent *CodeLine[], unsigned int *NumOfLines, int *LabelsArr[])
+static bool PreAssemble(const char *InFilePath, TableOfContent *CodeLine[], unsigned int *NumOfLines, label *Label[], size_t *NumOfLabels)
 {
-    if(InFilePath == NULL)
+    if(InFilePath == NULL || CodeLine == NULL || Label == NULL || NumOfLabels == NULL)
         return true;
 
-    if(CodeLine == NULL)
-        return true;
-    
-    if(LabelsArr == NULL)
-        return true;
+    *NumOfLabels = 0;
+    // if(CodeLine == NULL)
+    //     return true;
 
-    //-------------------------------------OPEN--------------------------------
-    char *Cursor = CreateStrBuffer(InFilePath);
+    // if(Label == NULL)
+    //     return true;
 
-    if(Cursor == NULL)
+    //-------------------------------------OPEN & INIT--------------------------------
+    char *PtrToBegin = CreateStrBuffer(InFilePath);
+    char *Cursor = PtrToBegin;
+
+    if(PtrToBegin == NULL)
     {
         _print_err("File(s) can't open\n");
 
         return true;
     }
 
-    (*CodeLine) = CreateTOC(Cursor, NumOfLines, '\n');
+    (*CodeLine) = CreateTOC(PtrToBegin, NumOfLines, '\n');
     
     if(CodeLine == NULL)
     {
@@ -37,21 +39,27 @@ static bool PreAssemble(const char *InFilePath, TableOfContent *CodeLine[], unsi
     {
         _print_err("File(s) can't open\n");
 
-        free(Cursor);
+        free(PtrToBegin);
 
         return true;
     }
 
-    *LabelsArr = (int *)calloc(LABLES_SIZE, sizeof(int));
+    // *LabelsArr = (int *)calloc(LABLES_SIZE, sizeof(int));
 
-    if(*LabelsArr == NULL)
+    // if(*LabelsArr == NULL)
+    //     return true;
+
+    *Label = (label *)calloc(LABLES_SIZE, sizeof(label));
+    if(*Label == NULL)
         return true;
+
+    //size_t NumOfLabels = 0;
     //-------------------------------------------------------------------------
 
-    ExcludeComments(Cursor);
+    ExcludeComments(PtrToBegin);
 
     unsigned int InstrCounter = 0;
-    long long int Lable = 0;
+    //long long int Lable = 0;
 
     for (unsigned int i = 0; i < *NumOfLines; i++)
     {
@@ -62,20 +70,30 @@ static bool PreAssemble(const char *InFilePath, TableOfContent *CodeLine[], unsi
         if(*Cursor == ':')
         {
             *Cursor++ = '\0';
-            Cursor = AtoIAndMove(Cursor, &Lable);
-            Cursor = SkipSpaces(Cursor);
+            // Cursor = AtoIAndMove(Cursor, &Lable);
+            // Cursor = SkipSpaces(Cursor);
 
-            if(CheckEndLine(Cursor) || Lable >= LABLES_SIZE || Lable < 0)
+            if(MakeLabel(Cursor, *Label, NumOfLabels, InstrCounter))
             {
-                _print_err("?lable?\t");
+                _print_err("?label?\t");
                 _print_location(InFilePath, i);
 
-                free(Cursor);
+                free(PtrToBegin);
 
                 return true;
             }
 
-            (*LabelsArr)[Lable] = (int)InstrCounter;
+            // if(CheckEndLine(Cursor) || Lable >= LABLES_SIZE || Lable < 0)
+            // {
+            //     _print_err("?lable?\t");
+            //     _print_location(InFilePath, i);
+
+            //     free(Cursor);
+
+            //     return true;
+            // }
+
+            // (*LabelsArr)[Lable] = (int)InstrCounter;
         }
 
         else
@@ -99,18 +117,22 @@ bool Assemble(const char *InFilePath, const char *OutFilePath)
 
     unsigned int NumOfLines = 0;
 
-    int *LabelsArr = NULL;
+    //int *LabelsArr = NULL;
 
-    if(PreAssemble(InFilePath, &CodeLine, &NumOfLines, &LabelsArr))
+    label *Label = NULL;
+
+    size_t NumOfLabels = 0;
+
+    if(PreAssemble(InFilePath, &CodeLine, &NumOfLines, &Label, &NumOfLabels))
     {
         free(CodeLine[0].Line);
         free(CodeLine);
-        free(LabelsArr);
+        free(Label);
 
         return true;
     }
 
-    assert(LabelsArr);
+    assert(Label);
 
     FILE *Out = fopen(OutFilePath, "w");  
     if(Out == NULL)
@@ -119,7 +141,7 @@ bool Assemble(const char *InFilePath, const char *OutFilePath)
 
         free(CodeLine[0].Line);
         free(CodeLine);
-        free(LabelsArr);
+        free(Label);
 
         return true;
     }
@@ -232,7 +254,7 @@ bool Assemble(const char *InFilePath, const char *OutFilePath)
         case JNE:
         case CALL:
 
-            if (DoJmpInstr(Cursor, Out, Instr, LabelsArr))
+            if (DoJmpInstr(Cursor, Out, Instr, Label, NumOfLabels))
             {
                 ErrorStatus = true;
 
@@ -283,7 +305,7 @@ bool Assemble(const char *InFilePath, const char *OutFilePath)
     if(CodeLine)
         free(CodeLine[0].Line);   
     free(CodeLine);
-    free(LabelsArr);
+    free(Label);
     fclose(Out);
 
     if(ErrorStatus)

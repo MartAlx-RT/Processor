@@ -10,7 +10,7 @@ char *SkipSpaces(char *Cursor)
     return Cursor;
 }
 
-static char *CompareAndMove(char *CompInstr, const char *RefInstr)
+char *CompareAndMove(char *CompInstr, const char *RefInstr)
 {
     assert(CompInstr);
     assert(RefInstr);
@@ -136,10 +136,11 @@ void ExcludeComments(char *Program)
 
 bool CheckEndLine(char *Line)
 {
-    assert(Line);
+    if(Line == NULL)
+        return true;
 
-
-    while (*Line != '\n' && *Line != '\0' && *Line != EOF) {
+    while (*Line != '\n' && *Line != '\0' && *Line != EOF)
+    {
         if(*Line != ' ' && *Line != '\t')
             return true;
 
@@ -201,5 +202,54 @@ unsigned int CountInstrInLine(char *Cursor)
     }
 
     return (unsigned int)-1;
+}
+
+char *RecognizeLabelAndMove(char *Cursor, label *Label, size_t NumOfLabels, long long int *LabelLoc)
+{
+    assert(Cursor);
+    assert(Label);
+    assert(LabelLoc);
+
+    char *Cursor1 = NULL;
+
+    for (size_t i = 0; i < NumOfLabels; i++)
+    {
+        if((Cursor1 = CompareAndMove(Cursor, Label[i].Name)))
+        {
+            *LabelLoc = Label[i].Loc;
+
+            return Cursor1;
+        }
+    }
+
+    return NULL;
+}
+
+bool MakeLabel(char *Cursor, label *Label, size_t *NumOfLabels, long long int LabelLoc)
+{
+    assert(Cursor);
+    assert(Label);
+    assert(NumOfLabels);
+
+    size_t i = 0;
+
+    while(i < MAX_LABEL_LENGTH && Cursor[i] > ' ')
+    {
+        Label[*NumOfLabels].Name[i] = Cursor[i];
+
+        i++;
+    }
+
+    if(i == MAX_LABEL_LENGTH)
+        return true;
+
+    Label[*NumOfLabels].Name[i] = '\0';
+
+    Label[*NumOfLabels].Loc = LabelLoc;
+
+    (*NumOfLabels)++;
+
+    return CheckEndLine(Cursor + i);
+
 }
 

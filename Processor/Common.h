@@ -11,6 +11,14 @@ extern const char *REGS_NAME[];
 
 extern const unsigned int LABLES_SIZE;
 
+typedef struct
+{
+    char Name[50];//gcc
+
+    long long int Loc;
+    
+} label;
+
 typedef enum
 {
     PUSH,
